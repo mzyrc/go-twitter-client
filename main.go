@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
+	"go-twitter-client/handlers"
 	"log"
 	"net/http"
 )
@@ -16,8 +17,8 @@ func main() {
 	}
 
 	router := mux.NewRouter()
-	router.HandleFunc("/token", GetRequestTokensHandler).Methods(http.MethodGet)
+	router.HandleFunc("/token", handlers.GetRequestTokensHandler).Methods(http.MethodGet)
 	handler := cors.Default().Handler(router)
 
-	http.ListenAndServe(":8000", handler)
+	log.Fatal(http.ListenAndServe(":8000", handler))
 }

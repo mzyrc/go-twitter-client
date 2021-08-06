@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"net/http"
@@ -102,7 +102,7 @@ func Test_Integration_Postman_Scenario(t *testing.T) {
 		TokenSecret:    "O12WM5xJtaz8i7ipI47mcHftbTZEoSQU3JxTjsbKKFuSP",
 	}
 	
-	actual := CreateSignature(http.MethodPost, "https://api.twitter.com/oauth/request_token", params, &secrets)
+	actual := encodeParams(CreateSignature(http.MethodPost, "https://api.twitter.com/oauth/request_token", params, &secrets))
 	expected := "NZY3uzdzBIAfwOxzctOvAvQyYc8%3D"
 
 	if actual != expected {

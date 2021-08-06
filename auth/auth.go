@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"errors"
@@ -12,20 +12,22 @@ import (
 	"time"
 )
 
-func GetRequestTokensHandler(writer http.ResponseWriter, request *http.Request) {
-	log.Println("Fetching tokens")
-
-	tokens, err := getRequestTokens()
-
-	if err != nil {
-		respondWithError(writer, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	respondWithSuccess(writer, http.StatusOK, tokens)
+type Credentials struct {
+	ConsumerKey    string
+	ConsumerSecret string
+	Token          string
+	TokenSecret    string
 }
 
-func getRequestTokens() (string, error) {
+type TwitterOAuth1 struct {
+	credentials *Credentials
+}
+
+func NewTwitterOAuth1(credentials *Credentials) *TwitterOAuth1 {
+	return &TwitterOAuth1{credentials: credentials}
+}
+
+func (t *TwitterOAuth1) GetRequestToken() (string, error) {
 	request, _ := http.NewRequest(http.MethodPost, "https://api.twitter.com/oauth/request_token", nil)
 
 	OAuthParams := make(map[string]string)
@@ -38,7 +40,7 @@ func getRequestTokens() (string, error) {
 	OAuthParams["oauth_version"] = "1.0"
 
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", getOAuthHeaders(OAuthParams))
+	request.Header.Set("Authorization", t.getOAuthHeaders(OAuthParams))
 
 	client := http.Client{}
 	response, err := client.Do(request)
@@ -46,8 +48,6 @@ func getRequestTokens() (string, error) {
 	if response.StatusCode != http.StatusOK {
 		return "", errors.New("Could not request token")
 	}
-
-	log.Println(response.Body)
 
 	if err != nil {
 		log.Println(err)
@@ -66,7 +66,7 @@ func getRequestTokens() (string, error) {
 	return values.Get("oauth_token"), nil
 }
 
-func getOAuthHeaders(params map[string]string) string {
+func (t *TwitterOAuth1) getOAuthHeaders(params map[string]string) string {
 	secrets := OAuthSecrets{
 		ConsumerSecret: os.Getenv("OAUTH_CONSUMER_SECRET"),
 		TokenSecret:    os.Getenv("OAUTH_TOKEN_SECRET"),
