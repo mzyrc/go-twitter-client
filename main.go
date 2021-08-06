@@ -17,7 +17,10 @@ func main() {
 	}
 
 	router := mux.NewRouter()
-	router.HandleFunc("/token", handlers.GetRequestTokensHandler).Methods(http.MethodGet)
+
+	router.HandleFunc("/oauth/request_token", handlers.GetRequestTokensHandler).Methods(http.MethodGet)
+	router.HandleFunc("/oauth/access_token", handlers.GetUserAccessTokens).Methods(http.MethodPost)
+
 	handler := cors.Default().Handler(router)
 
 	log.Fatal(http.ListenAndServe(":8000", handler))

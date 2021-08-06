@@ -72,7 +72,7 @@ func (t *TwitterOAuth1) getOAuthHeaders(params map[string]string) string {
 		TokenSecret:    os.Getenv("OAUTH_TOKEN_SECRET"),
 	}
 
-	signature := CreateSignature(http.MethodPost, "https://api.twitter.com/oauth/request_token", params, &secrets)
+	signature := CreateSignature(http.MethodPost, requestTokenEndpoint, params, &secrets)
 
 	nonceHeader := fmt.Sprintf("oauth_nonce=\"%s\"", params["oauth_nonce"])
 	callbackHeader := fmt.Sprintf("oauth_callback=\"%s\"", encodeParams(params["oauth_callback"]))
@@ -84,4 +84,36 @@ func (t *TwitterOAuth1) getOAuthHeaders(params map[string]string) string {
 	oauthTokenHeader := fmt.Sprintf("oauth_token=\"%s\"", params["oauth_token"])
 
 	return fmt.Sprintf("OAuth %s,%s,%s,%s,%s,%s,%s,%s", consumerKeyHeader, oauthTokenHeader, signatureMethodHeader, oauthTimestampHeader, nonceHeader, versionHeader, callbackHeader, signatureHeader)
+}
+
+func (t *TwitterOAuth1) GetUserTokens(oauthToken string, oauthVerifier string) (string, string, error) {
+	request, _ := http.NewRequest(http.MethodPost, accessTokenEndpoint, nil)
+
+	query := request.URL.Query()
+	query.Add("oauth_token", oauthToken)
+	query.Add("oauth_verifier", oauthVerifier)
+
+	request.URL.RawQuery = query.Encode()
+
+	log.Println(request.URL.String())
+
+	client := http.Client{}
+
+	response, err := client.Do(request)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return "", "", errors.New("Could not get user access tokens")
+	}
+
+	body, _ := ioutil.ReadAll(response.Body)
+
+	values, err := url.ParseQuery(string(body))
+
+	log.Println(values)
+
+	return values.Get("oauth_token"), values.Get("oauth_token_secret"), nil
 }
