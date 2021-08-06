@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 )
@@ -14,18 +15,14 @@ import (
 func GetRequestTokensHandler(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Fetching tokens")
 
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(http.StatusOK)
-
 	tokens, err := getRequestTokens()
 
 	if err != nil {
-		writer.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(writer, err.Error())
+		respondWithError(writer, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	fmt.Fprintf(writer, tokens)
+	respondWithSuccess(writer, http.StatusOK, tokens)
 }
 
 func getRequestTokens() (string, error) {
@@ -40,6 +37,7 @@ func getRequestTokens() (string, error) {
 	OAuthParams["oauth_token"] = os.Getenv("OAUTH_TOKEN")
 	OAuthParams["oauth_version"] = "1.0"
 
+	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", getOAuthHeaders(OAuthParams))
 
 	client := http.Client{}
@@ -49,13 +47,23 @@ func getRequestTokens() (string, error) {
 		return "", errors.New("Could not request token")
 	}
 
+	log.Println(response.Body)
+
 	if err != nil {
 		log.Println(err)
 	}
 
 	body, _ := ioutil.ReadAll(response.Body)
 
-	return string(body), nil
+	values, err := url.ParseQuery(string(body))
+
+	if err != nil {
+		return "", errors.New("Error occured when parsing tokens")
+	}
+
+	values.Get("oauth_token")
+
+	return values.Get("oauth_token"), nil
 }
 
 func getOAuthHeaders(params map[string]string) string {
