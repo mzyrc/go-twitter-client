@@ -1,4 +1,4 @@
-module go-twitter-client
+module github.com/davidbenjamin998/go-twitter-client
 
 go 1.16
 
