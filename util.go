@@ -1,4 +1,4 @@
-package auth
+package go_twitter_client
 
 import (
 	"crypto/hmac"
