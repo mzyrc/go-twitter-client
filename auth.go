@@ -19,6 +19,12 @@ type Credentials struct {
 	TokenSecret    string
 }
 
+type UserIdentity struct {
+	Token       string `json:"token"`
+	TokenSecret string `json:"token_secret"`
+	UserId      string `json:"user_id"`
+}
+
 type TwitterOAuth1 struct {
 	credentials *Credentials
 }
@@ -86,7 +92,7 @@ func (t *TwitterOAuth1) getOAuthHeaders(params map[string]string) string {
 	return fmt.Sprintf("OAuth %s,%s,%s,%s,%s,%s,%s,%s", consumerKeyHeader, oauthTokenHeader, signatureMethodHeader, oauthTimestampHeader, nonceHeader, versionHeader, callbackHeader, signatureHeader)
 }
 
-func (t *TwitterOAuth1) GetUserTokens(oauthToken string, oauthVerifier string) (string, string, error) {
+func (t *TwitterOAuth1) GetUserTokens(oauthToken string, oauthVerifier string) (*UserIdentity, error) {
 	request, _ := http.NewRequest(http.MethodPost, accessTokenEndpoint, nil)
 
 	query := request.URL.Query()
@@ -94,26 +100,23 @@ func (t *TwitterOAuth1) GetUserTokens(oauthToken string, oauthVerifier string) (
 	query.Add("oauth_verifier", oauthVerifier)
 
 	request.URL.RawQuery = query.Encode()
-
-	log.Println(request.URL.String())
-
 	client := http.Client{}
-
 	response, err := client.Do(request)
 
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return "", "", errors.New("Could not get user access tokens")
+		return nil, errors.New("Could not get user access tokens")
 	}
 
 	body, _ := ioutil.ReadAll(response.Body)
-
 	values, err := url.ParseQuery(string(body))
 
-	log.Println(values)
-
-	return values.Get("oauth_token"), values.Get("oauth_token_secret"), nil
+	return &UserIdentity{
+		Token:       values.Get("oauth_token"),
+		TokenSecret: values.Get("oauth_token_secret"),
+		UserId:      values.Get("user_id"),
+	}, nil
 }
