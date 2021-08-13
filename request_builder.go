@@ -8,13 +8,6 @@ import (
 	"time"
 )
 
-type AuthConfig struct {
-	ConsumerKey       string
-	ConsumerKeySecret string
-	Token             string
-	TokenSecret       string
-}
-
 type RequestConfig struct {
 	Method            string
 	CustomOAuthParams map[string]string

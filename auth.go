@@ -13,6 +13,13 @@ const (
 	accessTokenEndpoint  = "https://api.twitter.com/oauth/access_token"
 )
 
+type AuthConfig struct {
+	ConsumerKey       string `json:"consumer_key"`
+	ConsumerKeySecret string `json:"consumer_key_secret"`
+	Token             string `json:"token"`
+	TokenSecret       string `json:"token_secret"`
+}
+
 type UserIdentity struct {
 	Token       string `json:"token"`
 	TokenSecret string `json:"token_secret"`
